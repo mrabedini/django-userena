@@ -24,7 +24,10 @@ urlpatterns = [
     url(r'^signout/$',
        userena_views.signout,
        name='userena_signout'),
-
+    url(r'^kmod-signin/$',
+         userena_views.signin,
+         name='kmod_userena_signin'),
+    url(r'^kmod-signup/$',userena_views.signup,kwargs={'success_url':'http://127.0.0.1/komods/sharif/ee/confirm'},name='kmod_userena_signup'),
     # Reset password
     url(r'^password/reset/$',
        auth_views.password_reset,
@@ -57,12 +60,12 @@ urlpatterns = [
 
     # Activate
     url(r'^activate/(?P<activation_key>\w+)/$',
-       userena_views.activate,kwargs={'success_url':'komods/sharif/ee/choose'},
+       userena_views.activate,kwargs={'success_url':'http://127.0.0.1/komods/sharif/ee/choose'},
        name='userena_activate'),
 
     # Retry activation
     url(r'^activate/retry/(?P<activation_key>\w+)/$',
-        userena_views.activate_retry
+        userena_views.activate_retry,
         name='userena_activate_retry'),
 
     # Change email and confirm it
