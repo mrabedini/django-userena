@@ -57,12 +57,12 @@ urlpatterns = [
 
     # Activate
     url(r'^activate/(?P<activation_key>\w+)/$',
-       userena_views.activate,
+       userena_views.activate,kwargs={'success_url':'komods/sharif/ee/choose'},
        name='userena_activate'),
 
     # Retry activation
     url(r'^activate/retry/(?P<activation_key>\w+)/$',
-        userena_views.activate_retry,
+        userena_views.activate_retry
         name='userena_activate_retry'),
 
     # Change email and confirm it
