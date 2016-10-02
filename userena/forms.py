@@ -1,4 +1,4 @@
-#encoding:utf-8
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 from django import forms
@@ -20,7 +20,7 @@ except ImportError:
 
 attrs_dict = {'class': 'required'}
 
-USERNAME_RE = r'^[\.\w]+$'
+USERNAME_RE =r'^(?:\d*)?\d+$' #r'^[\.\w]+$'
 
 class SignupForm(forms.Form):
     """
@@ -31,19 +31,19 @@ class SignupForm(forms.Form):
 
     """
     username = forms.RegexField(regex=USERNAME_RE,
-                                max_length=30,
-                                widget=forms.TextInput(attrs=attrs_dict),
-                                label=_("Username"),
-                                error_messages={'invalid': _('Username must contain only letters, numbers, dots and underscores.')})
-    email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict,
-                                                               maxlength=75)),
-                             label=_("Email"))
-    password1 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict,
-                                                           render_value=False),
-                                label=_("Create password"))
-    password2 = forms.CharField(widget=forms.PasswordInput(attrs=attrs_dict,
-                                                           render_value=False),
-                                label=_("Repeat password"))
+                                max_length=15,
+                                widget=forms.TextInput(attrs={'class':'required','placeholder':'شماره دانشجویی'}),
+                                #label=_("Username"),
+                                error_messages={'invalid': _('شماره دانشجویی تنها می‌بایست شامل عدد باشد.')})
+    email = forms.EmailField(widget=forms.TextInput(attrs=dict({'class':'required','placeholder':'ایمیل'},
+                                                               maxlength=75)))
+                             #label=_("Email"))
+    password1 = forms.CharField(widget=forms.PasswordInput(attrs={'class':'required','placeholder':'رمز عبور'},
+                                                           render_value=False))
+                                #label=_("Create password"))
+    password2 = forms.CharField(widget=forms.PasswordInput(attrs={'class':'required','placeholder':'تکرار رمز عبور'},
+                                                           render_value=False))
+                                #label=_("Repeat password"))
 
     def clean_username(self):
         """
