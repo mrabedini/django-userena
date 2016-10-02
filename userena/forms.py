@@ -139,8 +139,8 @@ def identification_field_factory(label, error_required):
         String containing the error message if the field is left empty.
 
     """
-    return forms.CharField(label=label,
-                           widget=forms.TextInput(attrs=attrs_dict),
+    return forms.CharField(
+                           widget=forms.TextInput(attrs={'class':'required','placeholder':'شماره دانشجویی یا ایمیل'}),
                            max_length=75,
                            error_messages={'required': error_required})
 
@@ -150,19 +150,20 @@ class AuthenticationForm(forms.Form):
 
     """
     identification = identification_field_factory(_("Email or username"),
-                                                  _("Either supply us with your email or username."))
-    password = forms.CharField(label=_("Password"),
-                               widget=forms.PasswordInput(attrs=attrs_dict, render_value=False))
+                                                  ("شماره دانشجویی یا ایمیل را وارد کنید"))
+    password = forms.CharField(
+                               widget=forms.PasswordInput({'class':'required','placeholder':'رمز عبور'}, render_value=False))
     remember_me = forms.BooleanField(widget=forms.CheckboxInput(),
                                      required=False,
-                                     label=_('Remember me for %(days)s') % {'days': _(userena_settings.USERENA_REMEMBER_ME_DAYS[0])})
+				     label='مرا برای ۷ روز به یاد بسپار')
+                                     #label=('مرا برای  %(days) روز به یاد بسپار') % {'days': _(userena_settings.USERENA_REMEMBER_ME_DAYS[0])})
 
     def __init__(self, *args, **kwargs):
         """ A custom init because we need to change the label if no usernames is used """
         super(AuthenticationForm, self).__init__(*args, **kwargs)
         # Dirty hack, somehow the label doesn't get translated without declaring
         # it again here.
-        self.fields['remember_me'].label = _('Remember me for %(days)s') % {'days': _(userena_settings.USERENA_REMEMBER_ME_DAYS[0])}
+        #self.fields['remember_me'].label = _('Remember me for %(days)s') % {'days': _(userena_settings.USERENA_REMEMBER_ME_DAYS[0])}
         if userena_settings.USERENA_WITHOUT_USERNAMES:
             self.fields['identification'] = identification_field_factory(_("Email"),
                                                                          _("Please supply your email."))
