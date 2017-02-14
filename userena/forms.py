@@ -254,3 +254,16 @@ class EditProfileForm(forms.ModelForm):
         user.save()
 
         return profile
+
+class InviteForm(forms.Form):
+    email = forms.EmailField(widget=forms.TextInput(attrs=dict(attrs_dict,
+                                                   maxlength=75)),
+                                                   label=_("Email"))
+
+    def clean_email(self):
+        """ Validate that the email is not already registered with another user """
+        if get_user_model().objects.filter(email__iexact=self.cleaned_data['email']):
+            raise forms.ValidationError(_('This email is already in use. Please supply a different email.'))
+        return self.cleaned_data['email']
+    def save(self,*args,**kwargs):
+        pass

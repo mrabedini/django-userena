@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404,render
 from django.contrib.auth import authenticate, login, logout, REDIRECT_FIELD_NAME
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
@@ -12,7 +12,7 @@ from django.utils.translation import ugettext as _
 from django.http import Http404, HttpResponseRedirect
 
 from userena.forms import (SignupForm, SignupFormOnlyEmail, AuthenticationForm,
-                           ChangeEmailForm, EditProfileForm)
+                           ChangeEmailForm, EditProfileForm,InviteForm)
 from userena.models import UserenaSignup
 from userena.decorators import secure_required
 from userena.utils import signin_redirect, get_profile_model, get_user_profile
@@ -69,6 +69,25 @@ class ProfileListView(ListView):
         queryset = profile_model.objects.get_visible_profiles(self.request.user).select_related()
         return queryset
 
+@secure_required
+def invite_new_user(request,invite_form=InviteForm,template_name='userena/invite_new_user.html',extra_context=None):
+    if(request.user.has_perm('invite_user')):
+        if not extra_context: 
+            extra_context = dict()
+
+        if request.method == 'POST':
+                form = InviteForm(request.POST, request.FILES)
+                if form.is_valid():
+                    form.save()
+                extra_context['form'] = form
+                return ExtraContextTemplateView.as_view(template_name=template_name,
+                                                extra_context=extra_context)(request)
+        form=InviteForm()
+        extra_context['form'] = form
+        return ExtraContextTemplateView.as_view(template_name=template_name,
+                                                extra_context=extra_context)(request)
+    else:
+        raise PermissionDenied
 @secure_required
 def signup(request, signup_form=SignupForm,
            template_name='userena/signup_form.html', success_url=None,

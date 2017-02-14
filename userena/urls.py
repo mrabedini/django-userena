@@ -55,6 +55,9 @@ urlpatterns = [
                           'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
        name='userena_signup_complete'),
 
+    # Invite
+    url(r'^invite/$',userena_views.invite_new_user,{'template_name':'userena/invite_new_user.html'},
+        name='userena_invite_new_user'),
     # Activate
     url(r'^activate/(?P<activation_key>\w+)/$',
        userena_views.activate,

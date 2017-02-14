@@ -18,6 +18,7 @@ from .mail import UserenaConfirmationMail
 
 PROFILE_PERMISSIONS = (
             ('view_profile', 'Can view profile'),
+            ('invite_user', 'Can invite user'),
 )
 
 
@@ -200,6 +201,8 @@ class UserenaBaseProfile(models.Model):
                                choices=PRIVACY_CHOICES,
                                default=userena_settings.USERENA_DEFAULT_PRIVACY,
                                help_text=_('Designates who can view your profile.'))
+
+    maxNumberOfInvitationTicket = models.IntegerField(default=3)
 
     objects = UserenaBaseProfileManager()
 
