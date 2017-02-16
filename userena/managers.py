@@ -16,6 +16,7 @@ from userena import signals as userena_signals
 
 from guardian.shortcuts import assign_perm, get_perms
 
+from django.utils.crypto import get_random_string
 
 
 import re
@@ -34,6 +35,16 @@ ASSIGNED_PERMISSIONS = {
 
 class UserenaManager(UserManager):
     """ Extra functionality for the Userena model. """
+    def invite_user(self,inviter,invited_email):
+        if inviter.get_remaining_invite_tickets_number()>0 :
+            password=get_random_string()
+            invitedUser=self.create_user(invited_email,invited_email,password)
+            #profile=self.create_userena_profile(user)
+            invitedProfile=get_user_profile(user=invitedUser)
+            inviter.invited_users.add(invitedProfile)
+            return True
+        else:
+            return False
 
     def create_user(self, username, email, password, active=False,
                     send_email=True):

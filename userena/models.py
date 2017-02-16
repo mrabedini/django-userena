@@ -204,6 +204,8 @@ class UserenaBaseProfile(models.Model):
 
     maxNumberOfInvitationTicket = models.IntegerField(default=3)
 
+    invitedBy = models.ForeignKey('self',on_delete=models.SET_NULL,null=True,blank=True,related_name='invited_users' )
+
     objects = UserenaBaseProfileManager()
 
 
@@ -337,6 +339,12 @@ class UserenaBaseProfile(models.Model):
 
         # Fallback to closed profile.
         return False
+    def get_remaining_invite_tickets_number(self):
+        if(self.user.has_perm('invite_user')):
+            return self.maxNumberOfInvitationTicket-self.invited_users.all().count()
+        return 0
+
+
 
 
 class UserenaLanguageBaseProfile(UserenaBaseProfile):

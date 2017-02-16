@@ -24,6 +24,10 @@ urlpatterns = [
     url(r'^signout/$',
        userena_views.signout,
        name='userena_signout'),
+     # Invite
+     url(r'^invite/$',userena_views.invite_new_user,{'template_name':'userena/invite_new_user.html','success_url':'userena_list_invited_users'},
+        name='userena_invite_new_user'),
+    url(r'^invited-users/$',userena_views.list_invited_users,{'template_name':'userena/list_invited_users.html'},name='userena_list_invited_users'),
 
     # Reset password
     url(r'^password/reset/$',
@@ -55,10 +59,7 @@ urlpatterns = [
                           'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
        name='userena_signup_complete'),
 
-    # Invite
-    url(r'^invite/$',userena_views.invite_new_user,{'template_name':'userena/invite_new_user.html'},
-        name='userena_invite_new_user'),
-    # Activate
+       # Activate
     url(r'^activate/(?P<activation_key>\w+)/$',
        userena_views.activate,
        name='userena_activate'),

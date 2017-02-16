@@ -9,7 +9,7 @@ from django.views.generic.list import ListView
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect,HttpResponse
 
 from userena.forms import (SignupForm, SignupFormOnlyEmail, AuthenticationForm,
                            ChangeEmailForm, EditProfileForm,InviteForm)
@@ -20,6 +20,7 @@ from userena import signals as userena_signals
 from userena import settings as userena_settings
 
 from guardian.decorators import permission_required_or_403
+from django.contrib.auth.decorators import login_required
 
 import warnings
 
@@ -35,6 +36,39 @@ class ExtraContextTemplateView(TemplateView):
 
     # this view is used in POST requests, e.g. signup when the form is not valid
     post = TemplateView.get
+
+class InvitedUsersListView(ListView):
+    """ Lists all profiles """
+    context_object_name='invited_user_list'
+    page=1
+    paginate_by=50
+    template_name='userena/list_invited_users.html'
+    extra_context=None
+
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(InvitedUsersListView, self).get_context_data(**kwargs)
+        try:
+            page = int(self.request.GET.get('page', None))
+        except (TypeError, ValueError):
+            page = self.page
+
+        if not self.extra_context: self.extra_context = dict()
+
+        context['page'] = page
+        context['paginate_by'] = self.paginate_by
+        context['extra_context'] = self.extra_context
+        profile_model= get_profile_model()
+        currentProfile=profile_model.objects.get(user=self.request.user)
+        context['numOfRemainingInvitationTicket']= currentProfile.get_remaining_invite_tickets_number()
+        return context
+
+    def get_queryset(self):
+        profile_model= get_profile_model()
+        currentProfile=profile_model.objects.get(user=self.request.user)
+        queryset = currentProfile.invited_users.all()  
+        return queryset
 
 class ProfileListView(ListView):
     """ Lists all profiles """
@@ -70,24 +104,34 @@ class ProfileListView(ListView):
         return queryset
 
 @secure_required
-def invite_new_user(request,invite_form=InviteForm,template_name='userena/invite_new_user.html',extra_context=None):
+def invite_new_user(request,invite_form=InviteForm,template_name='userena/invite_new_user.html',success_url='userena_list_invited_users',extra_context=None):
     if(request.user.has_perm('invite_user')):
         if not extra_context: 
             extra_context = dict()
 
         if request.method == 'POST':
-                form = InviteForm(request.POST, request.FILES)
+                form = InviteForm(request.user,request.POST, request.FILES)
                 if form.is_valid():
-                    form.save()
+                    result=form.save()
+                    if result: #if result is True everythin was ok
+                        return redirect(success_url)
+                    else:
+                        return HttpResponse(status=500)
                 extra_context['form'] = form
                 return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
-        form=InviteForm()
+        form=InviteForm(request.user)
         extra_context['form'] = form
         return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
     else:
         raise PermissionDenied
+
+@secure_required
+@login_required
+def list_invited_users(request,template_name='userena/list_invited_users.html'):
+    return InvitedUsersListView.as_view(template_name=template_name)(request)
+
 @secure_required
 def signup(request, signup_form=SignupForm,
            template_name='userena/signup_form.html', success_url=None,
