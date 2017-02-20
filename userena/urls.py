@@ -24,12 +24,8 @@ urlpatterns = [
     url(r'^signout/$',
        userena_views.signout,
        name='userena_signout'),
-     # Invite
-     url(r'^invite/$',userena_views.invite_new_user,{'template_name':'userena/invite_new_user.html','success_url':'userena_list_invited_users'},
-        name='userena_invite_new_user'),
-    url(r'^invited-users/$',userena_views.list_invited_users,{'template_name':'userena/list_invited_users.html'},name='userena_list_invited_users'),
 
-    # Reset password
+         # Reset password
     url(r'^password/reset/$',
        auth_views.password_reset,
        merged_dict({'template_name': 'userena/password_reset_form.html',
@@ -58,6 +54,16 @@ urlpatterns = [
         'extra_context': {'userena_activation_required': userena_settings.USERENA_ACTIVATION_REQUIRED,
                           'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
        name='userena_signup_complete'),
+
+    # Invite
+     url(r'^invite/$',userena_views.invite_new_user,{'template_name':'userena/invite_new_user.html','success_url':'userena_list_invited_users'},
+        name='userena_invite_new_user'),
+    url(r'^invited-users/$',userena_views.list_invited_users,{'template_name':'userena/list_invited_users.html'},name='userena_list_invited_users'),
+    url(r'^invite/(?P<invitation_key>\w+)/$',
+       userena_views.activate_invited_user,
+       name='userena_activate_invited_user'),
+
+
 
        # Activate
     url(r'^activate/(?P<activation_key>\w+)/$',

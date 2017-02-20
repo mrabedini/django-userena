@@ -104,13 +104,14 @@ class ProfileListView(ListView):
         return queryset
 
 @secure_required
+@login_required
 def invite_new_user(request,invite_form=InviteForm,template_name='userena/invite_new_user.html',success_url='userena_list_invited_users',extra_context=None):
     if(request.user.has_perm('invite_user')):
         if not extra_context: 
             extra_context = dict()
 
         if request.method == 'POST':
-                form = InviteForm(request.user,request.POST, request.FILES)
+                form = invite_form(request.user,request.POST, request.FILES)
                 if form.is_valid():
                     result=form.save()
                     if result: #if result is True everythin was ok
@@ -120,7 +121,7 @@ def invite_new_user(request,invite_form=InviteForm,template_name='userena/invite
                 extra_context['form'] = form
                 return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
-        form=InviteForm(request.user)
+        form=invite_form(request.user)
         extra_context['form'] = form
         return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
@@ -325,6 +326,82 @@ def activate_retry(request, activation_key,
             return redirect(reverse('userena_activate',args=(activation_key,)))
     except UserenaSignup.DoesNotExist:
         return redirect(reverse('userena_activate',args=(activation_key,)))
+
+@secure_required
+def activate_invited_user(request, invitation_key,
+             template_name='userena/invite_fail.html',
+             retry_template_name='userena/invite_retry.html',
+             success_url=None, extra_context=None):
+    """
+    Activate an invited  user with an invitation key.
+
+    The key is a SHA1 string. When the SHA1 is found with an
+    :class:`UserenaSignup`, the :class:`User` of that account will be
+    activated.  After a successful activation the view will redirect to
+    ``success_url``.  If the SHA1 is not found, the user will be shown the
+    ``template_name`` template displaying a fail message.
+    If the SHA1 is found but expired, ``retry_template_name`` is used instead,
+    so the user can proceed to :func:`activate_retry` to get a new activation key.
+
+    :param invitation_key:
+        String of a SHA1 string of 40 characters long. A SHA1 is always 160bit
+        long, with 4 bits per character this makes it --160/4-- 40 characters
+        long.
+
+    :param template_name:
+        String containing the template name that is used when the
+        ``activation_key`` is invalid and the activation fails. Defaults to
+        ``userena/activate_fail.html``.
+
+    :param retry_template_name:
+        String containing the template name that is used when the
+        ``activation_key`` is expired. Defaults to
+        ``userena/activate_retry.html``.
+
+    :param success_url:
+        String containing the URL where the user should be redirected to after
+        a successful activation. Will replace ``%(username)s`` with string
+        formatting if supplied. If ``success_url`` is left empty, will direct
+        to ``userena_profile_detail`` view.
+
+    :param extra_context:
+        Dictionary containing variables which could be added to the template
+        context. Default to an empty dictionary.
+
+    """
+    try:
+        if (not UserenaSignup.objects.check_expired_invitation(invitation_key)
+            or not userena_settings.USERENA_ACTIVATION_RETRY):
+            user = UserenaSignup.objects.activate_invited_user(invitation_key)
+            if user:
+                # Sign the user in.
+                auth_user = authenticate(identification=user.email,
+                                         check_password=False)
+                login(request, auth_user)
+                
+                if userena_settings.USERENA_USE_MESSAGES:
+                    messages.success(request, _('Your account has been activated and you have been signed in.'),
+                                     fail_silently=True)
+
+                if success_url: redirect_to = success_url % {'username': user.username }
+                else: redirect_to = reverse('userena_profile_detail',
+                                            kwargs={'username': user.username})
+                return redirect(redirect_to)
+            else:
+                if not extra_context: extra_context = dict()
+                return ExtraContextTemplateView.as_view(template_name=template_name,
+                                                        extra_context=extra_context)(
+                                        request)
+        else:
+            if not extra_context: extra_context = dict()
+            extra_context['invitation_key'] = invitation_key
+            return ExtraContextTemplateView.as_view(template_name=retry_template_name,
+                                                extra_context=extra_context)(request)
+    except UserenaSignup.DoesNotExist:
+        if not extra_context: extra_context = dict()
+        return ExtraContextTemplateView.as_view(template_name=template_name,
+                                                extra_context=extra_context)(request)
+
 
 @secure_required
 def email_confirm(request, confirmation_key,

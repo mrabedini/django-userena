@@ -13,6 +13,7 @@ from userena.managers import UserenaManager, UserenaBaseProfileManager
 from userena.utils import get_gravatar, generate_sha1, get_protocol, \
     get_datetime_now, user_model_label
 import datetime
+from userena.utils import get_user_profile
 from .mail import UserenaConfirmationMail
 
 
@@ -60,6 +61,10 @@ class UserenaSignup(models.Model):
                                       max_length=40,
                                       blank=True)
 
+    invitation_key = models.CharField(_('invitation key'),
+                                      max_length=40,
+                                      blank=True)
+
     activation_notification_send = models.BooleanField(_('notification send'),
                                                        default=False,
                                                        help_text=_('Designates whether this user has already got a notification about activating their account.'))
@@ -75,6 +80,9 @@ class UserenaSignup(models.Model):
     email_confirmation_key_created = models.DateTimeField(_('creation date of email confirmation key'),
                                                           blank=True,
                                                           null=True)
+
+    INVITATION_STATUS_CHOICES = (('INV','Invitation Mail was sent'),('PSWRST','Password was reset by user'),('PRFEDIT','Profile was edited by user'))
+    invitation_status= models.CharField(max_length=7,choices=INVITATION_STATUS_CHOICES,default='INV')
 
     objects = UserenaManager()
 
@@ -174,6 +182,45 @@ class UserenaSignup(models.Model):
 
         mailer = UserenaConfirmationMail(context=context)
         mailer.generate_mail("activation")
+        mailer.send_mail(self.user.email)
+
+    def invitation_key_expired(self):
+        """
+        Checks if invitation key is expired.
+
+        Returns ``True`` when the ``invitation_key`` of the user is expired and
+        ``False`` if the key is still valid.
+
+        The key is expired when it's set to the value defined in
+        ``USERENA_ACTIVATED`` or ``invitation_key_created`` is beyond the
+        amount of days defined in ``USERENA_ACTIVATION_DAYS``.
+
+        """
+        expiration_days = datetime.timedelta(days=userena_settings.USERENA_ACTIVATION_DAYS)
+        expiration_date = self.user.date_joined + expiration_days
+        #iif self.invitation_key == userena_settings.USERENA_ACTIVATED:
+        #    return True
+        if get_datetime_now() >= expiration_date:
+            return True
+        return False
+
+    def send_invitation_email(self):
+        """
+        Sends a invitation email to the user.
+
+        This email is send when the user wants to invite their newly created
+        user.
+
+        """
+        context = {'inviter': get_user_profile(self.user).invitedBy.user,
+                'without_usernames': userena_settings.USERENA_WITHOUT_USERNAMES,
+                'protocol': get_protocol(),
+                'activation_days': userena_settings.USERENA_ACTIVATION_DAYS,
+                'invitation_key': self.invitation_key,
+                'site': Site.objects.get_current()}
+
+        mailer = UserenaConfirmationMail(context=context)
+        mailer.generate_mail("invitation")
         mailer.send_mail(self.user.email)
 
 
