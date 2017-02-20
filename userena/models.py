@@ -212,7 +212,7 @@ class UserenaSignup(models.Model):
         user.
 
         """
-        context = {'profile' : get_user_profile(user=self.user),
+        context = {'img_url' : get_user_profile(user=self.user).get_mugshot_url(),
                 'inviter': get_user_profile(self.user).invitedBy.user,
                 'without_usernames': userena_settings.USERENA_WITHOUT_USERNAMES,
                 'protocol': get_protocol(),
