@@ -212,7 +212,8 @@ class UserenaSignup(models.Model):
         user.
 
         """
-        context = {'inviter': get_user_profile(self.user).invitedBy.user,
+        context = {'profile' : get_user_profile(user=self.user),
+                'inviter': get_user_profile(self.user).invitedBy.user,
                 'without_usernames': userena_settings.USERENA_WITHOUT_USERNAMES,
                 'protocol': get_protocol(),
                 'activation_days': userena_settings.USERENA_ACTIVATION_DAYS,
