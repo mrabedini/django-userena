@@ -67,7 +67,7 @@ class InvitedUsersListView(ListView):
     def get_queryset(self):
         profile_model= get_profile_model()
         currentProfile=profile_model.objects.get(user=self.request.user)
-        queryset = currentProfile.invited_users.all()  
+        queryset = currentProfile.invited_users.all()
         return queryset
 
 class ProfileListView(ListView):
@@ -107,7 +107,7 @@ class ProfileListView(ListView):
 @login_required
 def invite_new_user(request,invite_form=InviteForm,template_name='userena/invite_new_user.html',success_url='userena_list_invited_users',extra_context=None):
     if(request.user.has_perm('invite_user')):
-        if not extra_context: 
+        if not extra_context:
             extra_context = dict()
 
         if request.method == 'POST':
@@ -378,7 +378,7 @@ def activate_invited_user(request, invitation_key,
                 auth_user = authenticate(identification=user.email,
                                          check_password=False)
                 login(request, auth_user)
-                
+
                 if userena_settings.USERENA_USE_MESSAGES:
                     messages.success(request, _('Your account has been activated and you have been signed in.'),
                                      fail_silently=True)
@@ -597,7 +597,7 @@ def signin(request, auth_form=AuthenticationForm,
                 redirect_to = redirect_signin_function(
                     request.GET.get(redirect_field_name,
                                     request.POST.get(redirect_field_name)), user)
-                return HttpResponseRedirect(redirect_to)
+                return redirect(redirect_to)
             else:
                 return redirect(reverse('userena_disabled',
                                         kwargs={'username': user.username}))
