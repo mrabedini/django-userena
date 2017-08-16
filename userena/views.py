@@ -630,7 +630,7 @@ def signout(request, next_page=userena_settings.USERENA_REDIRECT_ON_SIGNOUT,
     if request.user.is_authenticated() and userena_settings.USERENA_USE_MESSAGES: # pragma: no cover
         messages.success(request, _('You have been signed out.'), fail_silently=True)
     userena_signals.account_signout.send(sender=None, user=request.user)
-    return Signout(request, next_page, template_name, *args, **kwargs)
+    return Signout(request, next_page=next_page, template_name=template_name, *args, **kwargs)
 
 @secure_required
 @permission_required_or_403('change_user', (get_user_model(), 'username', 'username'))
