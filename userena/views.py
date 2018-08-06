@@ -135,7 +135,9 @@ def list_invited_users(request,template_name='userena/list_invited_users.html'):
 
 @secure_required
 def signup(request, signup_form=SignupForm,
-           template_name='userena/signup_form.html', success_url=None,
+           template_name='userena/signup_form.html',
+           redirect_field_name=REDIRECT_FIELD_NAME,
+           success_url=None,
            extra_context=None):
     """
     Signup of an account.
@@ -188,9 +190,15 @@ def signup(request, signup_form=SignupForm,
             userena_signals.signup_complete.send(sender=None,
                                                  user=user)
 
-
-            if success_url: redirect_to = success_url
-            else: redirect_to = reverse('userena_signup_complete',
+            nextUrl = request.GET.get(redirect_field_name,
+                            request.POST.get(redirect_field_name,None))
+            if nextUrl:
+                redirect_to = nextUrl
+            else:
+                if success_url:
+                    redirect_to = success_url
+                else:
+                    redirect_to = reverse('userena_signup_complete',
                                         kwargs={'username': user.username})
 
             # A new signed user should logout the old one.
